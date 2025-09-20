@@ -17,7 +17,10 @@ export const handleCreateSubmission: RequestHandler = async (req, res) => {
 
 export const handleListSubmissions: RequestHandler = async (req, res) => {
   try {
-    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? "20"), 10) || 20, 1), 100);
+    const limit = Math.min(
+      Math.max(parseInt(String(req.query.limit ?? "20"), 10) || 20, 1),
+      100,
+    );
     const items = await listSubmissions({ limit });
     res.json({ items });
   } catch (e: any) {

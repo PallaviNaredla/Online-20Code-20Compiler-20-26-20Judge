@@ -6,14 +6,25 @@ import { spawn } from "node:child_process";
 import type { ExecuteRequest, ExecutionResult, Language } from "@shared/api";
 
 function makeTmpDir() {
-  const dir = join(tmpdir(), `judge-${Date.now()}-${randomBytes(6).toString("hex")}`);
+  const dir = join(
+    tmpdir(),
+    `judge-${Date.now()}-${randomBytes(6).toString("hex")}`,
+  );
   return fs.mkdir(dir, { recursive: true }).then(() => dir);
 }
 
-function runProcess(cmd: string, args: string[], options: { cwd?: string; input?: string; timeoutMs: number }): Promise<ExecutionResult> {
+function runProcess(
+  cmd: string,
+  args: string[],
+  options: { cwd?: string; input?: string; timeoutMs: number },
+): Promise<ExecutionResult> {
   return new Promise((resolve) => {
     const start = Date.now();
-    const child = spawn(cmd, args, { cwd: options.cwd, stdio: ["pipe", "pipe", "pipe"], env: { ...process.env } });
+    const child = spawn(cmd, args, {
+      cwd: options.cwd,
+      stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env },
+    });
 
     let stdout = "";
     let stderr = "";
@@ -27,7 +38,13 @@ function runProcess(cmd: string, args: string[], options: { cwd?: string; input?
         child.kill("SIGKILL");
       } catch {}
       const durationMs = Date.now() - start;
-      resolve({ stdout, stderr: stderr + "\n[Timed out]", exitCode: null, timedOut: true, durationMs });
+      resolve({
+        stdout,
+        stderr: stderr + "\n[Timed out]",
+        exitCode: null,
+        timedOut: true,
+        durationMs,
+      });
     }, options.timeoutMs);
 
     child.on("close", (code) => {
@@ -43,31 +60,60 @@ function runProcess(cmd: string, args: string[], options: { cwd?: string; input?
   });
 }
 
-async function runPython(code: string, stdin: string | undefined, timeoutMs: number): Promise<ExecutionResult> {
+async function runPython(
+  code: string,
+  stdin: string | undefined,
+  timeoutMs: number,
+): Promise<ExecutionResult> {
   const dir = await makeTmpDir();
   const file = join(dir, "main.py");
   await fs.writeFile(file, code, "utf8");
   // Prefer python3, fallback to python
-  const result = await runProcess("bash", ["-lc", `command -v python3 >/dev/null 2>&1 && python3 ${file} || python ${file}`], {
-    cwd: dir,
-    input: stdin,
-    timeoutMs,
-  });
+  const result = await runProcess(
+    "bash",
+    [
+      "-lc",
+      `command -v python3 >/dev/null 2>&1 && python3 ${file} || python ${file}`,
+    ],
+    {
+      cwd: dir,
+      input: stdin,
+      timeoutMs,
+    },
+  );
   return result;
 }
 
-async function runJava(code: string, stdin: string | undefined, timeoutMs: number): Promise<ExecutionResult> {
+async function runJava(
+  code: string,
+  stdin: string | undefined,
+  timeoutMs: number,
+): Promise<ExecutionResult> {
   const dir = await makeTmpDir();
   const mainFile = join(dir, "Main.java");
 
   const ensured = ensureJavaMain(code);
   await fs.writeFile(mainFile, ensured, "utf8");
 
-  const compile = await runProcess("bash", ["-lc", `javac Main.java`], { cwd: dir, timeoutMs: Math.max(2000, Math.floor(timeoutMs / 2)) });
+  const compile = await runProcess("bash", ["-lc", `javac Main.java`], {
+    cwd: dir,
+    timeoutMs: Math.max(2000, Math.floor(timeoutMs / 2)),
+  });
   if (compile.exitCode !== 0) {
-    return { ...compile, timedOut: compile.timedOut, exitCode: compile.exitCode, stdout: compile.stdout, stderr: "Compilation failed\n" + compile.stderr, durationMs: compile.durationMs };
+    return {
+      ...compile,
+      timedOut: compile.timedOut,
+      exitCode: compile.exitCode,
+      stdout: compile.stdout,
+      stderr: "Compilation failed\n" + compile.stderr,
+      durationMs: compile.durationMs,
+    };
   }
-  const run = await runProcess("bash", ["-lc", `java Main`], { cwd: dir, input: stdin, timeoutMs });
+  const run = await runProcess("bash", ["-lc", `java Main`], {
+    cwd: dir,
+    input: stdin,
+    timeoutMs,
+  });
   return run;
 }
 

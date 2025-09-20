@@ -1,6 +1,11 @@
 import type { RequestHandler } from "express";
 import { execute as runExec } from "../judge/executor";
-import type { ExecuteRequest, TestRunRequest, TestRunResponse, TestRunCaseResult } from "@shared/api";
+import type {
+  ExecuteRequest,
+  TestRunRequest,
+  TestRunResponse,
+  TestRunCaseResult,
+} from "@shared/api";
 
 export const handleExecute: RequestHandler = async (req, res) => {
   const body = req.body as ExecuteRequest;
@@ -30,11 +35,23 @@ export const handleTestRun: RequestHandler = async (req, res) => {
     const results: TestRunCaseResult[] = [];
     let passed = 0;
     for (const t of body.tests) {
-      const r = await runExec({ language: body.language, code: body.code, stdin: t.input, timeoutMs });
+      const r = await runExec({
+        language: body.language,
+        code: body.code,
+        stdin: t.input,
+        timeoutMs,
+      });
       const expected = (t.expectedOutput ?? "").trim();
       const got = (r.stdout ?? "").trim();
-      const ok = expected.length ? got === expected : r.exitCode === 0 && !r.timedOut;
-      results.push({ ...r, testId: t.id, expectedOutput: t.expectedOutput, passed: ok });
+      const ok = expected.length
+        ? got === expected
+        : r.exitCode === 0 && !r.timedOut;
+      results.push({
+        ...r,
+        testId: t.id,
+        expectedOutput: t.expectedOutput,
+        passed: ok,
+      });
       if (ok) passed++;
     }
     const resp: TestRunResponse = { total: body.tests.length, passed, results };

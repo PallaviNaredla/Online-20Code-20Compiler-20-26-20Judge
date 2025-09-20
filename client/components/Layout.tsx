@@ -8,7 +8,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <span className="inline-block h-8 w-8 rounded-md bg-gradient-to-br from-fuchsia-500 to-sky-500" />
-            <span className="font-extrabold tracking-tight text-xl">AlgoJudge</span>
+            <span className="font-extrabold tracking-tight text-xl">
+              AlgoJudge
+            </span>
           </Link>
           <nav className="flex items-center gap-2">
             <NavItem to="/" label="Playground" />
@@ -34,7 +36,7 @@ function NavItem({ to, label }: { to: string; label: string }) {
       className={({ isActive }) =>
         cn(
           "px-3 py-2 rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
-          isActive && "bg-primary/10 text-primary"
+          isActive && "bg-primary/10 text-primary",
         )
       }
       end

@@ -28,7 +28,9 @@ export async function saveSubmission(sub: SubmissionRecord): Promise<void> {
   }
 }
 
-export async function listSubmissions(filter: SubmissionFilter = {}): Promise<SubmissionRecord[]> {
+export async function listSubmissions(
+  filter: SubmissionFilter = {},
+): Promise<SubmissionRecord[]> {
   const limit = filter.limit ?? 20;
   const uri = process.env.MONGODB_URI;
   if (!uri) {
